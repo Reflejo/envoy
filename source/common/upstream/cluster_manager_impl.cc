@@ -11,6 +11,7 @@
 #include "common/http/http1/conn_pool.h"
 #include "common/http/http2/conn_pool.h"
 #include "common/http/async_client_impl.h"
+#include "common/router/shadow_writer_impl.h"
 
 namespace Upstream {
 
@@ -206,8 +207,8 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ThreadLocalClusterManagerImpl
     Runtime::RandomGenerator& random, const std::string& local_zone_name)
     : parent_(parent), dispatcher_(dispatcher) {
   for (auto& cluster : parent.primary_clusters_) {
-    thread_local_clusters_[cluster.first].reset(new ClusterEntry(
-        *this, *cluster.second, runtime, random, parent.stats_, dispatcher, local_zone_name));
+    thread_local_clusters_[cluster.first].reset(
+        new ClusterEntry(*this, *cluster.second, runtime, random, parent.stats_, local_zone_name));
   }
 
   for (auto& cluster : thread_local_clusters_) {
@@ -273,10 +274,10 @@ void ClusterManagerImpl::ThreadLocalClusterManagerImpl::shutdown() {
 
 ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
     ThreadLocalClusterManagerImpl& parent, const Cluster& cluster, Runtime::Loader& runtime,
-    Runtime::RandomGenerator& random, Stats::Store& stats_store, Event::Dispatcher& dispatcher,
-    const std::string& local_zone_name)
+    Runtime::RandomGenerator& random, Stats::Store& stats_store, const std::string& local_zone_name)
     : parent_(parent), primary_cluster_(cluster),
-      http_async_client_(cluster, *this, stats_store, dispatcher, local_zone_name) {
+      http_async_client_(cluster, stats_store, local_zone_name, parent.parent_, runtime, random,
+                         Router::ShadowWriterPtr{new Router::ShadowWriterImpl(parent.parent_)}) {
 
   switch (cluster.lbType()) {
   case LoadBalancerType::LeastRequest: {

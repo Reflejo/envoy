@@ -18,7 +18,7 @@ using testing::ReturnRef;
 
 namespace Http {
 
-class AsyncClientImplTestBase : public testing::Test, public AsyncClientConnPoolFactory {
+class AsyncClientImplTestBase : public testing::Test {
 public:
   AsyncClientImplTestBase() {
     HttpTestUtility::addDefaultHeaders(message_->headers());
@@ -26,9 +26,9 @@ public:
   }
 
   // Http::AsyncClientConnPoolFactory
-  Http::ConnectionPool::Instance* connPool(Upstream::ResourcePriority) override {
+  /*Http::ConnectionPool::Instance* connPool(Upstream::ResourcePriority) override {
     return &conn_pool_;
-  }
+  }*/
 
   std::string upstream_zone_{"to_az"};
   MessagePtr message_{new RequestMessageImpl()};
@@ -37,10 +37,11 @@ public:
   NiceMock<MockStreamEncoder> stream_encoder_;
   StreamDecoder* response_decoder_{};
   NiceMock<Event::MockTimer>* timer_;
-  NiceMock<Event::MockDispatcher> dispatcher_;
+  // NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockCluster> cluster_;
 };
 
+/*
 class AsyncClientImplTestMockStats : public AsyncClientImplTestBase {
 public:
   NiceMock<Stats::MockStore> stats_store_;
@@ -303,5 +304,7 @@ TEST_F(AsyncClientImplTestIsolatedStats, CanaryStatusCounterFalse) {
   response_decoder_->decodeHeaders(std::move(response_headers), true);
   EXPECT_EQ(0U, stats_store_.counter("cluster.fake_cluster.canary.upstream_rq_200").value());
 }
+
+*/
 
 } // Http
