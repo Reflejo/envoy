@@ -176,8 +176,11 @@ target_link_libraries(envoy-test cares)
 target_link_libraries(envoy-test protobuf)
 target_link_libraries(envoy-test gmock)
 target_link_libraries(envoy-test pthread)
-target_link_libraries(envoy-test anl)
-target_link_libraries(envoy-test dl)
+
+if (LINUX)
+  target_link_libraries(envoy-test anl)
+  target_link_libraries(envoy-test dl)
+endif (LINUX)
 
 add_custom_target(
   envoy.generate_example_configs configs/configgen.sh generated/configs ${PROJECT_BINARY_DIR}

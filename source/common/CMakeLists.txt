@@ -18,8 +18,8 @@ add_custom_command(
 
 set_source_files_properties(generated/ratelimit.pb.cc PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
 
-add_library(
-  envoy-common OBJECT
+set(envoy-common-sources)
+list(APPEND envoy-common-sources
   api/api_impl.cc
   access_log/access_log_manager_impl.cc
   buffer/buffer_impl.cc
@@ -39,7 +39,6 @@ add_library(
   event/signal_impl.cc
   event/timer_impl.cc
   filesystem/filesystem_impl.cc
-  filesystem/watcher_impl.cc
   filter/auth/client_ssl.cc
   filter/echo.cc
   filter/ratelimit.cc
@@ -117,6 +116,14 @@ add_library(
   upstream/sds.cc
   upstream/upstream_impl.cc
   ${gen_git_sha_target})
+
+if (LINUX)
+  list(APPEND envoy-common-sources filesystem/watcher_impl_linux.cc)
+elseif (BSD)
+  list(APPEND envoy-common-sources filesystem/watcher_impl_bsd.cc)
+endif ()
+
+add_library(envoy-common OBJECT ${envoy-common-sources})
 
 include_directories(SYSTEM ${ENVOY_HTTP_PARSER_INCLUDE_DIR})
 include_directories(${ENVOY_RAPIDJSON_INCLUDE_DIR})

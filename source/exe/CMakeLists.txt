@@ -14,9 +14,15 @@ target_link_libraries(envoy lightstep_core_cxx11)
 target_link_libraries(envoy cares)
 target_link_libraries(envoy protobuf)
 target_link_libraries(envoy pthread)
-target_link_libraries(envoy anl)
-target_link_libraries(envoy rt)
-target_link_libraries(envoy dl)
+
+if (NOT DARWIN)
+  target_link_libraries(envoy rt)
+endif (NOT DARWIN)
+
+if (LINUX)
+  target_link_libraries(envoy anl)
+  target_link_libraries(envoy dl)
+endif (LINUX)
 
 include_directories(SYSTEM ${ENVOY_OPENSSL_INCLUDE_DIR})
 include_directories(SYSTEM ${ENVOY_LIGHTSTEP_TRACER_INCLUDE_DIR})

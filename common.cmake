@@ -1,4 +1,18 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb3 -fno-omit-frame-pointer -Wall -Wextra -Werror -Wnon-virtual-dtor -Woverloaded-virtual -Wold-style-cast -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb3 -fno-omit-frame-pointer -Wall -Wextra -Werror -Wnon-virtual-dtor -Woverloaded-virtual -Wold-style-cast -std=c++0x -fexceptions")
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(LINUX TRUE)
+endif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+
+if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  set(FREEBSD TRUE)
+  set(BSD TRUE)
+endif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  set(DARWIN TRUE)
+  set(BSD TRUE)
+endif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9")
@@ -24,6 +38,10 @@ endif()
 option(ENVOY_SANITIZE "build with address sanitizer" OFF)
 if (ENVOY_SANITIZE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+  set(ENVOY_TCMALLOC OFF CACHE BOOL "" FORCE)
+endif()
+
+if (BSD)
   set(ENVOY_TCMALLOC OFF CACHE BOOL "" FORCE)
 endif()
 
