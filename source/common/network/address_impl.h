@@ -1,6 +1,7 @@
 #pragma once
 
 #include "envoy/network/address.h"
+#include "common/network/utility.h"
 
 #include <sys/un.h>
 

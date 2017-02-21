@@ -6,6 +6,7 @@
 #include "envoy/server/options.h"
 
 #include "common/common/utility.h"
+#include "common/network/utility.h"
 
 #include <sys/mman.h>
 
@@ -63,7 +64,9 @@ void SharedMemory::initializeMutex(pthread_mutex_t& mutex) {
   pthread_mutexattr_t attribute;
   pthread_mutexattr_init(&attribute);
   pthread_mutexattr_setpshared(&attribute, PTHREAD_PROCESS_SHARED);
+#ifdef PTHREAD_MUTEX_ROBUST
   pthread_mutexattr_setrobust(&attribute, PTHREAD_MUTEX_ROBUST);
+#endif
   pthread_mutex_init(&mutex, &attribute);
 }
 

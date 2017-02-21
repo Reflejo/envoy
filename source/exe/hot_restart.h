@@ -58,9 +58,11 @@ public:
     // getting into a further messed up state.
     int rc = pthread_mutex_lock(&mutex_);
     ASSERT(rc == 0 || rc == EOWNERDEAD);
+#ifdef PTHREAD_MUTEX_ROBUST
     if (rc == EOWNERDEAD) {
       pthread_mutex_consistent(&mutex_);
     }
+#endif
   }
 
   void unlock() override {

@@ -4,6 +4,10 @@
 #include "envoy/network/connection.h"
 #include "envoy/stats/stats.h"
 
+#ifndef SOCK_NONBLOCK
+#define SOCK_NONBLOCK O_NONBLOCK
+#endif
+
 namespace Network {
 
 /**
