@@ -55,11 +55,17 @@ TEST_F(ProxyProtocolTest, Basic) {
 
   read_filter_.reset(new MockReadFilter());
   EXPECT_CALL(*read_filter_, onNewConnection());
-  EXPECT_CALL(*read_filter_, onData(BufferStringEqual("more data")));
+  EXPECT_CALL(*read_filter_, onData(BufferStringEqual("more data")))
+      .WillOnce(Invoke([&](Buffer::Instance&) -> Network::FilterStatus {
+        accepted_connection->close(ConnectionCloseType::NoFlush);
+        conn_->close(ConnectionCloseType::NoFlush);
+        socket_.close();
+        dispatcher_.exit();
 
-  dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
-  accepted_connection->close(ConnectionCloseType::NoFlush);
-  conn_->close(ConnectionCloseType::NoFlush);
+        return Network::FilterStatus::Continue;
+      }));
+
+  dispatcher_.run(Event::Dispatcher::RunType::Block);
 }
 
 TEST_F(ProxyProtocolTest, Fragmented) {
@@ -75,10 +81,13 @@ TEST_F(ProxyProtocolTest, Fragmented) {
         ASSERT_EQ("255.255.255.255", conn->remoteAddress().ip()->addressAsString());
         read_filter_.reset(new MockReadFilter());
         conn->addReadFilter(read_filter_);
+
         conn->close(ConnectionCloseType::NoFlush);
+        conn_->close(ConnectionCloseType::NoFlush);
+        dispatcher_.exit();
       }));
 
-  dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher_.run(Event::Dispatcher::RunType::Block);
 }
 
 TEST_F(ProxyProtocolTest, PartialRead) {
@@ -92,6 +101,8 @@ TEST_F(ProxyProtocolTest, PartialRead) {
         read_filter_.reset(new MockReadFilter());
         conn->addReadFilter(read_filter_);
         conn->close(ConnectionCloseType::NoFlush);
+        conn_->close(ConnectionCloseType::NoFlush);
+        dispatcher_.exit();
       }));
 
   dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
@@ -100,21 +111,29 @@ TEST_F(ProxyProtocolTest, PartialRead) {
   write(".3.4 66776");
   write(" 1234\r\n");
 
-  dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher_.run(Event::Dispatcher::RunType::Block);
 }
 
 TEST_F(ProxyProtocolTest, MalformedProxyLine) {
   write("BOGUS\r\n");
   EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::Connected));
-  EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::RemoteClose));
-  dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
+  EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::RemoteClose))
+      .WillOnce(Invoke([&](uint32_t) -> void {
+        conn_->close(ConnectionCloseType::NoFlush);
+        dispatcher_.exit();
+      }));
+  dispatcher_.run(Event::Dispatcher::RunType::Block);
 }
 
 TEST_F(ProxyProtocolTest, ProxyLineTooLarge) {
   write("012345678901234567890123456789012345678901234567890123456789\r\n");
   EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::Connected));
-  EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::RemoteClose));
-  dispatcher_.run(Event::Dispatcher::RunType::NonBlock);
+  EXPECT_CALL(connection_callbacks_, onEvent(ConnectionEvent::RemoteClose))
+      .WillOnce(Invoke([&](uint32_t) -> void {
+        conn_->close(ConnectionCloseType::NoFlush);
+        dispatcher_.exit();
+      }));
+  dispatcher_.run(Event::Dispatcher::RunType::Block);
 }
 
 } // Network

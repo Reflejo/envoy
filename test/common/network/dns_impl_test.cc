@@ -33,6 +33,7 @@ public:
       : connection_(std::move(connection)), hosts_(hosts) {
     connection_->addReadFilter(Network::ReadFilterPtr{new ReadFilter(*this)});
   }
+  ~TestDnsServerQuery() { connection_->close(Network::ConnectionCloseType::NoFlush); }
 
 private:
   struct ReadFilter : public Network::ReadFilterBaseImpl {

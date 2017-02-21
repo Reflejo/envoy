@@ -671,8 +671,8 @@ TEST_F(IntegrationTest, TcpProxyUpstreamDisconnect) {
   FakeRawConnectionPtr fake_upstream_connection;
   executeActions(
       {[&]() -> void { tcp_client = makeTcpConnection(IntegrationTest::TCP_PROXY_PORT); },
-       [&]() -> void { tcp_client->write("hello"); },
        [&]() -> void { fake_upstream_connection = fake_upstreams_[0]->waitForRawConnection(); },
+       [&]() -> void { tcp_client->write("hello"); },
        [&]() -> void { fake_upstream_connection->waitForData(5); },
        [&]() -> void { fake_upstream_connection->write("world"); },
        [&]() -> void { fake_upstream_connection->close(); },
@@ -687,8 +687,8 @@ TEST_F(IntegrationTest, TcpProxyDownstreamDisconnect) {
   FakeRawConnectionPtr fake_upstream_connection;
   executeActions(
       {[&]() -> void { tcp_client = makeTcpConnection(IntegrationTest::TCP_PROXY_PORT); },
-       [&]() -> void { tcp_client->write("hello"); },
        [&]() -> void { fake_upstream_connection = fake_upstreams_[0]->waitForRawConnection(); },
+       [&]() -> void { tcp_client->write("hello"); },
        [&]() -> void { fake_upstream_connection->waitForData(5); },
        [&]() -> void { fake_upstream_connection->write("world"); },
        [&]() -> void { tcp_client->waitForData("world"); },

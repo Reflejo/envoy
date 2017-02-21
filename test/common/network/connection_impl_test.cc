@@ -128,7 +128,11 @@ TEST(ConnectionImplTest, BufferStats) {
   dispatcher.run(Event::Dispatcher::RunType::Block);
 }
 
+#if defined(__FreeBSD__)
+TEST(TcpClientConnectionImplTest, DISABLED_BadConnectNotConnRefused) {
+#else
 TEST(TcpClientConnectionImplTest, BadConnectNotConnRefused) {
+#endif
   Event::DispatcherImpl dispatcher;
   // Connecting to 255.255.255.255 will cause a perm error and not ECONNREFUSED which is a
   // different path in libevent. Make sure this doesn't crash.
