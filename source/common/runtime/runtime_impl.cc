@@ -10,27 +10,35 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#if defined(LINUX) || defined(__APPLE__)
+#include <uuid/uuid.h>
+#endif
+
 namespace Runtime {
 
 const size_t RandomGeneratorImpl::UUID_LENGTH = 36;
 
 std::string RandomGeneratorImpl::uuid() {
-  int fd = open("/proc/sys/kernel/random/uuid", O_RDONLY);
-  if (-1 == fd) {
-    throw EnvoyException(fmt::format("unable to open uuid, errno: {}", strerror(errno)));
-  }
+  char *generated_uuid = reinterpret_cast<char *>(malloc(sizeof(char) * UUID_LENGTH));
 
-  char generated_uuid[UUID_LENGTH + 1];
-  ssize_t bytes_read = read(fd, generated_uuid, UUID_LENGTH);
-  close(fd);
-  generated_uuid[UUID_LENGTH] = '\0';
+#if defined(LINUX) || defined(__APPLE__)
+  uuid_t uuid;
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, generated_uuid);
+#else
+  sprintf(generated_uuid, "%08lx-%04x-%04x-%04x-%04x%08lx",
+      static_cast<unsigned long>(arc4random()),
+      static_cast<unsigned>(arc4random() & 0xffff),
+      static_cast<unsigned>((arc4random() & 0xfff) | 0x4000),
+      static_cast<unsigned>((arc4random() & 0x3fff) | 0x8000),
+      static_cast<unsigned>(arc4random() & 0xffff),
+      static_cast<unsigned long>(arc4random())
+  );
+#endif
 
-  if (bytes_read != UUID_LENGTH) {
-    throw EnvoyException(fmt::format("cannot read the uuid: bytes read - {}, bytes expected - {}",
-                                     bytes_read, UUID_LENGTH));
-  }
-
-  return std::string(generated_uuid);
+  std::string string_uuid(generated_uuid);
+  free(generated_uuid);
+  return string_uuid;
 }
 
 SnapshotImpl::SnapshotImpl(const std::string& root_path, const std::string& override_path,
