@@ -120,7 +120,13 @@ int HotRestartImpl::bindDomainSocket(uint64_t id) {
   // easily read single messages.
   int fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0);
   sockaddr_un address = createDomainSocketAddress(id);
-  int rc = bind(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+
+#if defined(__FreeBSD__)
+  int size = SUN_LEN(&address);
+#else
+  int size = sizeof(address);
+#endif
+  int rc = bind(fd, reinterpret_cast<sockaddr*>(&address), size);
   if (rc != 0) {
     throw EnvoyException(
         fmt::format("unable to bind domain socket with id={} (see --base-id option)", id));
@@ -139,10 +145,19 @@ sockaddr_un HotRestartImpl::createDomainSocketAddress(uint64_t id) {
   sockaddr_un address;
   memset(&address, 0, sizeof(address));
   address.sun_family = AF_UNIX;
+#if defined(__FreeBSD__)
+  //TODO: Do this properly. Temporary hack.
+  const std::string BASE_SOCKET_DIR = "/var/run/envoy/";
+  std::string path(fmt::format("{}socket_{}", BASE_SOCKET_DIR, options_.baseId() + id));
+
+  StringUtil::strlcpy(address.sun_path, path.c_str(), sizeof(address.sun_path) - 1);
+#else
   StringUtil::strlcpy(&address.sun_path[1],
                       fmt::format("envoy_domain_socket_{}", options_.baseId() + id).c_str(),
                       sizeof(address.sun_path) - 1);
   address.sun_path[0] = 0;
+#endif
+
   return address;
 }
 
