@@ -18,8 +18,9 @@
 #include <regex>
 #include <signal.h>
 #include <sstream>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <string.h>
-#include <sys/signalfd.h>
 #include <unistd.h>
 #include <unordered_set>
 

@@ -21,7 +21,9 @@ bool fileExists(const std::string& path) {
 bool directoryExists(const std::string& path) {
   DIR* dir = opendir(path.c_str());
   bool dirExists = nullptr != dir;
-  closedir(dir);
+  if (dirExists) {
+    closedir(dir);
+  }
 
   return dirExists;
 }
