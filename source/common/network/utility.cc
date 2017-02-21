@@ -9,7 +9,10 @@
 #include "common/network/address_impl.h"
 
 #include <ifaddrs.h>
+
+#if defined(LINUX)
 #include <linux/netfilter_ipv4.h>
+#endif
 
 namespace Network {
 
@@ -181,7 +184,11 @@ bool Utility::isLoopbackAddress(const Address::Instance& address) {
 Address::InstancePtr Utility::getOriginalDst(int fd) {
   sockaddr_storage orig_addr;
   socklen_t addr_len = sizeof(sockaddr_storage);
+#ifdef SOL_IP
   int status = getsockopt(fd, SOL_IP, SO_ORIGINAL_DST, &orig_addr, &addr_len);
+#else
+  int status = getsockname(fd, reinterpret_cast<sockaddr *>(&orig_addr), &addr_len);
+#endif
 
   if (status == 0) {
     // TODO: IPv6 support

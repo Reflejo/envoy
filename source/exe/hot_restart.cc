@@ -8,7 +8,10 @@
 #include "common/common/utility.h"
 
 #include <sys/mman.h>
+
+#if defined(LINUX)
 #include <sys/prctl.h>
+#endif
 
 namespace Server {
 
@@ -76,11 +79,13 @@ HotRestartImpl::HotRestartImpl(Options& options)
     parent_address_ = createDomainSocketAddress((options.restartEpoch() + -1));
   }
 
+#ifdef PR_SET_PDEATHSIG
   // If our parent ever goes away just terminate us so that we don't have to rely on ops/launching
   // logic killing the entire process tree. We should never exist without our parent.
   int rc = prctl(PR_SET_PDEATHSIG, SIGTERM);
   RELEASE_ASSERT(rc != -1);
   UNREFERENCED_PARAMETER(rc);
+#endif
 }
 
 Stats::RawStatData* HotRestartImpl::alloc(const std::string& name) {
